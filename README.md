@@ -1,5 +1,5 @@
 # EfficientNetV2-pytorch
-Unofficial EfficientNetV2 pytorch implementation repository.
+Unofficial EfficientNetV2 pytorch implementation repository. This repository is currently under the develop.
 
 - Title: EfficientNetV2: Smaller models and Faster Training
 
