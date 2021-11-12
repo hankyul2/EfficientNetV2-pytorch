@@ -4,7 +4,7 @@ from functools import partial
 import torch
 from torch import nn
 
-from pretrained_weight_loader import load_from_zoo
+from src.pretrained_weight_loader import load_from_zoo
 
 
 class ConvBNAct(nn.Sequential):
@@ -49,10 +49,8 @@ class MBConvConfig:
         self.in_ch = in_ch
         self.out_ch = out_ch
         self.num_layers = layers
-
         self.act = act
         self.norm_layer = norm_layer
-
         self.use_se = use_se
         self.fused = fused
 
@@ -80,9 +78,7 @@ class MBConv(nn.Module):
             block.append(SEUnit(inter_channel))
 
         block.append(ConvBNAct(inter_channel, config.out_ch, 1, 1, 1, config.norm_layer, nn.Identity))
-
         self.block = nn.Sequential(*block)
-
         self.use_skip_connection = config.stride == 1 and config.in_ch == config.out_ch
         self.stochastic_path = StochasticDepth(sd_prob, "row")
 
