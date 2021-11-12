@@ -105,9 +105,9 @@ class EfficientNetV2(nn.Module):
         self.stochastic_depth = stochastic_depth
 
         self.features = nn.Sequential(
-            ConvBNAct(3, self.in_channel, kernel_size=3, stride=2, norm_layer=self.norm_layer, act=self.act),
+            ConvBNAct(3, self.in_channel, 3, 2, 1, self.norm_layer, self.act),
             *self.make_stages(layer_infos, block),
-            ConvBNAct(self.last_channels, self.out_channels, kernel_size=1, stride=1, norm_layer=self.norm_layer, act=self.act)
+            ConvBNAct(self.last_channels, self.out_channels, 1, 1, 1, self.norm_layer, self.act)
         )
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.dropout = nn.Dropout(p=dropout)
