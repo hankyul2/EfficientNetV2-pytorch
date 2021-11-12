@@ -14,7 +14,8 @@ Unofficial EfficientNetV2 pytorch implementation repository. This repository is 
 This repository contains:
 
 1. Pytorch version EfficientNetV2.
-2. Pytorch lightning version training code on cifar10/100 and training log. If you are unfamiliar with pytorch-lightning, We recommend you to read [Lightning-in-2-steps](https://pytorch-lightning.readthedocs.io/en/latest/starter/new-project.html).
+2. Pytorch lightning version training code on cifar10/100 using progressive learning with autoaug and mixup. 
+   If you are unfamiliar with pytorch-lightning, We recommend you to read [Lightning-in-2-steps](https://pytorch-lightning.readthedocs.io/en/latest/starter/new-project.html).
 
 
 

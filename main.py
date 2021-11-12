@@ -1,11 +1,22 @@
+import os
+import warnings
+
+from torch.optim import SGD
+
+from src.lr_scheduler import CosineLR
+
+warnings.filterwarnings('ignore')
+os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+
 from torch import nn
 
 from pytorch_lightning import LightningModule
-from pytorch_lightning.utilities.cli import instantiate_class
+from pytorch_lightning.utilities.cli import instantiate_class, LightningCLI
 
 from torchmetrics import MetricCollection, Accuracy
 
 from src.efficientnet_v2 import get_efficientnet_v2
+from src.cifar import CIFAR
 
 
 class BaseVisionSystem(LightningModule):
@@ -87,10 +98,20 @@ class BaseVisionSystem(LightningModule):
             self.lr_scheduler_init_config['init_args']['max_epochs'] = self.max_epochs
         return self.lr_scheduler_init_config
 
-    @property
-    def lr(self):
-        return self.optimizer_init_config['init_args']['lr']
 
-    @lr.setter
-    def lr(self, val):
-        self.optimizer_init_config['init_args']['lr'] = val
+class MyLightningCLI(LightningCLI):
+    def add_arguments_to_parser(self, parser):
+        # 1. link argument
+        parser.link_arguments('data.num_classes', 'model.num_classes', apply_on='instantiate')
+        parser.link_arguments('data.num_step', 'model.num_step', apply_on='instantiate')
+        parser.link_arguments('trainer.max_epochs', 'model.max_epochs', apply_on='parse')
+        parser.link_arguments('trainer.gpus', 'model.gpus', apply_on='parse')
+
+        # 2. add optimizer & scheduler argument
+        parser.add_optimizer_args((SGD,), link_to='model.optimizer_init')
+        parser.add_lr_scheduler_args((CosineLR,), link_to='model.lr_scheduler_init')
+
+
+if __name__ == '__main__':
+    cli = MyLightningCLI(BaseVisionSystem, CIFAR, save_config_overwrite=True)
+    cli.trainer.test(ckpt_path='best')
