@@ -34,12 +34,15 @@ def load_npy_from_url(url, file_name):
 def npz_dim_convertor(name, weight):
     weight = torch.from_numpy(weight)
     if 'kernel' in name:
-        if weight.shape[3] == 1:
-            # depth-wise convolution 'h w in_c out_c -> in_c out_c h w'
-            weight = torch.permute(weight, (2, 3, 0, 1))
-        else:
-            # 'h w in_c out_c -> out_c in_c h w'
-            weight = torch.permute(weight, (3, 2, 0, 1))
+        if weight.dim() == 4:
+            if weight.shape[3] == 1:
+                # depth-wise convolution 'h w in_c out_c -> in_c out_c h w'
+                weight = torch.permute(weight, (2, 3, 0, 1))
+            else:
+                # 'h w in_c out_c -> out_c in_c h w'
+                weight = torch.permute(weight, (3, 2, 0, 1))
+        elif weight.dim() == 2:
+            weight = weight.transpose(1, 0)
     elif 'scale' in name or 'bias' in name:
         weight = weight.squeeze()
     return weight
@@ -93,11 +96,15 @@ def load_npy(model, weight):
         ('block.point_wise.1.running_var', 'tpu_batch_normalization_2/moving_variance/ExponentialMovingAverage'),
 
         # head
-        ('head.0.weight', 'head/conv2d/kernel/ExponentialMovingAverage'),
-        ('head.1.weight', 'head/tpu_batch_normalization/gamma/ExponentialMovingAverage'),
-        ('head.1.bias', 'head/tpu_batch_normalization/beta/ExponentialMovingAverage'),
-        ('head.1.running_mean', 'head/tpu_batch_normalization/moving_mean/ExponentialMovingAverage'),
-        ('head.1.running_var', 'head/tpu_batch_normalization/moving_variance/ExponentialMovingAverage'),
+        ('head.bottleneck.0.weight', 'head/conv2d/kernel/ExponentialMovingAverage'),
+        ('head.bottleneck.1.weight', 'head/tpu_batch_normalization/gamma/ExponentialMovingAverage'),
+        ('head.bottleneck.1.bias', 'head/tpu_batch_normalization/beta/ExponentialMovingAverage'),
+        ('head.bottleneck.1.running_mean', 'head/tpu_batch_normalization/moving_mean/ExponentialMovingAverage'),
+        ('head.bottleneck.1.running_var', 'head/tpu_batch_normalization/moving_variance/ExponentialMovingAverage'),
+
+        # classifier
+        ('head.classifier.weight', 'head/dense/kernel/ExponentialMovingAverage'),
+        ('head.classifier.bias', 'head/dense/bias/ExponentialMovingAverage'),
 
         ('\\.(\\d+)\\.', lambda x: f'_{int(x.group(1))}/'),
     ]
@@ -105,4 +112,6 @@ def load_npy(model, weight):
     for name, param in model.named_parameters():
         for pattern, sub in name_convertor:
             name = re.sub(pattern, sub, name)
+        if 'dense' in name and list(param.shape) not in [[1000, 1280], [21843, 1280]]:
+            continue
         param.data.copy_(npz_dim_convertor(name, weight.get(name)))

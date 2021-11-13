@@ -98,7 +98,7 @@ class MBConv(nn.Module):
 
 
 class EfficientNetV2(nn.Module):
-    def __init__(self, layer_infos, out_channels=1280, dropout=0.2, stochastic_depth=0.0, block=MBConv, act_layer=nn.SiLU, norm_layer=nn.BatchNorm2d):
+    def __init__(self, layer_infos, out_channels=1280, nclass=0, dropout=0.2, stochastic_depth=0.0, block=MBConv, act_layer=nn.SiLU, norm_layer=nn.BatchNorm2d):
         super(EfficientNetV2, self).__init__()
         self.layer_infos = layer_infos
         self.norm_layer = norm_layer
@@ -114,9 +114,13 @@ class EfficientNetV2(nn.Module):
 
         self.stem = ConvBNAct(3, self.in_channel, 3, 2, 1, self.norm_layer, self.act)
         self.blocks = nn.Sequential(*self.make_stages(layer_infos, block))
-        self.head = ConvBNAct(self.final_stage_channel, out_channels, 1, 1, 1, self.norm_layer, self.act)
-        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.dropout = nn.Dropout(p=dropout)
+        self.head = nn.Sequential(OrderedDict([
+            ('bottleneck', ConvBNAct(self.final_stage_channel, out_channels, 1, 1, 1, self.norm_layer, self.act)),
+            ('avgpool', nn.AdaptiveAvgPool2d((1, 1))),
+            ('flatten', nn.Flatten()),
+            ('dropout', nn.Dropout(p=dropout)),
+            ('classifier', nn.Linear(out_channels, nclass) if nclass else nn.Identity())
+        ]))
 
     def make_stages(self, layer_infos, block):
         return [layer for layer_info in layer_infos for layer in self.make_layers(copy.copy(layer_info), block)]
@@ -135,10 +139,10 @@ class EfficientNetV2(nn.Module):
         return sd_prob
 
     def forward(self, x):
-        return self.dropout(torch.flatten(self.avg_pool(self.head(self.blocks(self.stem(x)))), 1))
+        return self.head(self.blocks(self.stem(x)))
 
     def change_dropout_rate(self, p):
-        self.dropout = nn.Dropout(p=p)
+        self.head = nn.Dropout(p=p)
 
 
 def efficientnet_v2_init(model):
@@ -155,9 +159,9 @@ def efficientnet_v2_init(model):
             nn.init.zeros_(m.bias)
 
 
-def get_efficientnet_v2(model_name, pretrained, **kwargs):
+def get_efficientnet_v2(model_name, pretrained, nclass=0, **kwargs):
     residual_config = [MBConvConfig(*layer_config) for layer_config in get_efficientnet_v2_structure(model_name)]
-    model = EfficientNetV2(residual_config, 1280, dropout=0.1, stochastic_depth=0.2, block=MBConv, act_layer=nn.SiLU)
+    model = EfficientNetV2(residual_config, 1280, nclass, dropout=0.1, stochastic_depth=0.2, block=MBConv, act_layer=nn.SiLU)
     efficientnet_v2_init(model)
 
     if pretrained:
