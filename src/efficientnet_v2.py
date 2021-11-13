@@ -1,10 +1,16 @@
+"""Pytorch Implementation of EfficientNetV2
+- reference 1 (pytorch): https://github.com/d-li14/efficientnetv2.pytorch/blob/main/effnetv2.py
+- reference 2 (official): https://github.com/google/automl/blob/master/efficientnetv2/effnetv2_configs.py
+"""
+
 import copy
-from collections import OrderedDict
 from functools import partial
+from collections import OrderedDict
 
 import torch
 from torch import nn
 
+from src.efficientnetv2_config import get_efficientnet_v2_structure
 from src.pretrained_weight_loader import load_from_zoo
 
 
@@ -92,7 +98,7 @@ class MBConv(nn.Module):
 
 
 class EfficientNetV2(nn.Module):
-    def __init__(self, layer_infos, last_channel=1280, dropout=0.2, stochastic_depth=0.0, block=MBConv, act_layer=nn.SiLU, norm_layer=nn.BatchNorm2d):
+    def __init__(self, layer_infos, out_channels=1280, dropout=0.2, stochastic_depth=0.0, block=MBConv, act_layer=nn.SiLU, norm_layer=nn.BatchNorm2d):
         super(EfficientNetV2, self).__init__()
         self.layer_infos = layer_infos
         self.norm_layer = norm_layer
@@ -100,7 +106,7 @@ class EfficientNetV2(nn.Module):
 
         self.in_channel = layer_infos[0].in_ch
         self.final_stage_channel = layer_infos[-1].out_ch
-        self.last_channel = last_channel
+        self.out_channels = out_channels
 
         self.cur_block = 0
         self.num_block = sum(stage.num_layers for stage in layer_infos)
@@ -108,7 +114,7 @@ class EfficientNetV2(nn.Module):
 
         self.stem = ConvBNAct(3, self.in_channel, 3, 2, 1, self.norm_layer, self.act)
         self.blocks = nn.Sequential(*self.make_stages(layer_infos, block))
-        self.head = ConvBNAct(self.final_stage_channel, last_channel, 1, 1, 1, self.norm_layer, self.act)
+        self.head = ConvBNAct(self.final_stage_channel, out_channels, 1, 1, 1, self.norm_layer, self.act)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.dropout = nn.Dropout(p=dropout)
 
@@ -129,7 +135,10 @@ class EfficientNetV2(nn.Module):
         return sd_prob
 
     def forward(self, x):
-        return self.dropout(torch.flatten(self.avg_pool(self.head(self.features(self.stem(x)))), 1))
+        return self.dropout(torch.flatten(self.avg_pool(self.head(self.blocks(self.stem(x)))), 1))
+
+    def change_dropout_rate(self, p):
+        self.dropout = nn.Dropout(p=p)
 
 
 def efficientnet_v2_init(model):
@@ -147,54 +156,7 @@ def efficientnet_v2_init(model):
 
 
 def get_efficientnet_v2(model_name, pretrained, **kwargs):
-    # Todo: Change residual config
-    # reference(pytorch): https://github.com/d-li14/efficientnetv2.pytorch/blob/main/effnetv2.py
-    # reference(official): https://github.com/google/automl/blob/master/efficientnetv2/effnetv2_configs.py
-
-    if 'efficientnet_v2_s' in model_name:
-        residual_config = [
-            #        expand k  s  in  out layers  se  fused
-            MBConvConfig(1, 3, 1, 24, 24, 2, use_se=False, fused=True),
-            MBConvConfig(4, 3, 2, 24, 48, 4, use_se=False, fused=True),
-            MBConvConfig(4, 3, 2, 48, 64, 4, use_se=False, fused=True),
-            MBConvConfig(4, 3, 2, 64, 128, 6, use_se=True, fused=False),
-            MBConvConfig(6, 3, 1, 128, 160, 9, use_se=True, fused=False),
-            MBConvConfig(6, 3, 2, 160, 256, 15, use_se=True, fused=False),
-        ]
-    elif 'efficientnet_v2_m' in model_name:
-        residual_config = [
-            #        expand k  s  in  out layers  se  fused
-            MBConvConfig(1, 3, 1, 24, 24, 3, use_se=False, fused=True),
-            MBConvConfig(4, 3, 2, 24, 48, 5, use_se=False, fused=True),
-            MBConvConfig(4, 3, 2, 48, 80, 5, use_se=False, fused=True),
-            MBConvConfig(4, 3, 2, 80, 160, 7, use_se=True, fused=False),
-            MBConvConfig(6, 3, 1, 160, 176, 14, use_se=True, fused=False),
-            MBConvConfig(6, 3, 2, 176, 304, 18, use_se=True, fused=False),
-            MBConvConfig(6, 3, 1, 304, 512, 5, use_se=True, fused=False),
-        ]
-    elif 'efficientnet_v2_l' in model_name:
-        residual_config = [
-            #        expand k  s  in  out layers  se  fused
-            MBConvConfig(1, 3, 1, 32, 32, 4, use_se=False, fused=True),
-            MBConvConfig(4, 3, 2, 32, 64, 7, use_se=False, fused=True),
-            MBConvConfig(4, 3, 2, 64, 96, 7, use_se=False, fused=True),
-            MBConvConfig(4, 3, 2, 96, 192, 10, use_se=True, fused=False),
-            MBConvConfig(6, 3, 1, 192, 224, 19, use_se=True, fused=False),
-            MBConvConfig(6, 3, 2, 224, 384, 25, use_se=True, fused=False),
-            MBConvConfig(6, 3, 1, 384, 640, 7, use_se=True, fused=False),
-        ]
-    elif 'efficientnet_v2_xl' in model_name:
-        residual_config = [
-            #        expand k  s  in  out layers  se  fused
-            MBConvConfig(1, 3, 1, 32, 32, 4, use_se=False, fused=True),
-            MBConvConfig(4, 3, 2, 32, 64, 8, use_se=False, fused=True),
-            MBConvConfig(4, 3, 2, 64, 96, 8, use_se=False, fused=True),
-            MBConvConfig(4, 3, 2, 96, 192, 16, use_se=True, fused=False),
-            MBConvConfig(6, 3, 1, 192, 256, 24, use_se=True, fused=False),
-            MBConvConfig(6, 3, 2, 256, 512, 32, use_se=True, fused=False),
-            MBConvConfig(6, 3, 1, 512, 640, 8, use_se=True, fused=False),
-        ]
-
+    residual_config = [MBConvConfig(*layer_config) for layer_config in get_efficientnet_v2_structure(model_name)]
     model = EfficientNetV2(residual_config, 1280, dropout=0.1, stochastic_depth=0.2, block=MBConv, act_layer=nn.SiLU)
     efficientnet_v2_init(model)
 
