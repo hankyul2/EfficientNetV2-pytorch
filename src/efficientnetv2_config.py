@@ -1,7 +1,5 @@
-from box import Box
-
-
 def get_efficientnet_v2_hyperparam(model_name):
+    from box import Box
     # train_size, eval_size, dropout, randaug, mixup
     if 'efficientnet_v2_s' in model_name:
         end = 300, 384, 0.2, 10, 0
