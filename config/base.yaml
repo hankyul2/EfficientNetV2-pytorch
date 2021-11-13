@@ -1,6 +1,6 @@
 data:
   dataset_name: "cifar10"
-  batch_size: 32
+  batch_size: 128
   num_workers: 4
   size:
   - 224
@@ -11,16 +11,16 @@ data:
 # 2. define model (define other backbone)
 model:
   backbone_init:
-    model_name: "efficientnet_v2_xl_in21k"
+    model_name: "efficientnet_v2_s"
     pretrained: true
 
 # 3. prepare train tools (optimizer, learning rate scheduler)
 optimizer:
   class_path: torch.optim.SGD
   init_args:
-    lr: 0.01
+    lr: 0.001
     momentum: 0.95
-    weight_decay: 0.0005
+    weight_decay: 0.0
 
 lr_scheduler:
   class_path: src.lr_scheduler.CosineLR
@@ -46,4 +46,4 @@ trainer:
     - class_path: pytorch_lightning.callbacks.LearningRateMonitor
 
   # 4-4. precision
-  precision: 32
+  precision: 16

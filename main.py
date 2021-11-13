@@ -3,20 +3,17 @@ import warnings
 
 from torch.optim import SGD
 
-from src.lr_scheduler import CosineLR
-
 warnings.filterwarnings('ignore')
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 
 from torch import nn
-
 from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities.cli import instantiate_class, LightningCLI
-
 from torchmetrics import MetricCollection, Accuracy
 
-from src.efficientnet_v2 import get_efficientnet_v2
 from src.cifar import CIFAR
+from src.efficientnet_v2 import get_efficientnet_v2
+from src.lr_scheduler import CosineLR
 
 
 class BaseVisionSystem(LightningModule):
@@ -35,7 +32,7 @@ class BaseVisionSystem(LightningModule):
         super(BaseVisionSystem, self).__init__()
 
         # step 1. save data related info (not defined here)
-        self.num_step = num_step // (len(gpus.split(',')) - 1)
+        self.num_step = num_step // (len(gpus.split(','))-1)
         self.max_epochs = max_epochs
 
         # step 2. define model
