@@ -1,1 +1,16 @@
+# Pytorch Packages
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch>=1.9.0
+torchvision>=0.10.0
 pytorch-lightning[extra]
+torchmetrics
+
+# Utils
+numpy
+python-box
+einops
+
+# Logger
+tensorboard
+
+
