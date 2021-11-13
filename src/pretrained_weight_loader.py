@@ -112,6 +112,8 @@ def load_npy(model, weight):
     for name, param in model.named_parameters():
         for pattern, sub in name_convertor:
             name = re.sub(pattern, sub, name)
-        if 'dense' in name and list(param.shape) not in [[1000, 1280], [21843, 1280]]:
+        if 'dense/kernel' in name and list(param.shape) not in [[1000, 1280], [21843, 1280]]:
+            continue
+        if 'dense/bias' in name and list(param.shape) not in [[1000], [21843]]:
             continue
         param.data.copy_(npz_dim_convertor(name, weight.get(name)))
