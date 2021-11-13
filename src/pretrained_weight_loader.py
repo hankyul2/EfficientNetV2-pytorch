@@ -4,7 +4,6 @@ import subprocess
 from pathlib import Path
 
 import numpy as np
-from einops import rearrange
 
 import torch
 
@@ -36,10 +35,11 @@ def npz_dim_convertor(name, weight):
     weight = torch.from_numpy(weight)
     if 'kernel' in name:
         if weight.shape[3] == 1:
-            # depth-wise convolution
-            weight = rearrange(weight, 'h w in_c out_c -> in_c out_c h w')
+            # depth-wise convolution 'h w in_c out_c -> in_c out_c h w'
+            weight = torch.permute(weight, (2, 3, 0, 1))
         else:
-            weight = rearrange(weight, 'h w in_c out_c -> out_c in_c h w')
+            # 'h w in_c out_c -> out_c in_c h w'
+            weight = torch.permute(weight, (3, 2, 0, 1))
     elif 'scale' in name or 'bias' in name:
         weight = weight.squeeze()
     return weight

@@ -1,3 +1,5 @@
+dependencies = ['torch', 'python-box', 'numpy']
+
 from src.efficientnet_v2 import get_efficientnet_v2
 
 
