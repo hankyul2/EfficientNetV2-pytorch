@@ -110,8 +110,8 @@ If you want to finetuning on cifar, use this repository.
 1. For progressive learning, `ImageSize`, `RandAugmentation`, `Mixup`, `Dropout` are going to be changed along with epoch.
 2. Evaluation Size is different for each model
 3. `epoch=100` in *Cifar Stepup* is calculated from paper like this: `10,000 step * 512 batch size / 50,000 images = 102.4`
-4. To see more model specific details, check [efficientnet_v2_config.py](src/efficientnet_v2_config.py)
-5. To see more train hyperparameter, check [cifar.yaml](config/cifar.yaml)
+4. To see more model specific details, check [efficientnet_v2_config.py](src/efficientnetv2_config.py)
+5. To see more train hyperparameter, check [cifar.yaml](config/base.yaml)
 
 
 
