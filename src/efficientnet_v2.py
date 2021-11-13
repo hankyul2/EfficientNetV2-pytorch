@@ -1,4 +1,5 @@
 import copy
+from collections import OrderedDict
 from functools import partial
 
 import torch
@@ -68,17 +69,18 @@ class MBConv(nn.Module):
         inter_channel = config.adjust_channels(config.in_ch, config.expand_ratio)
         block = []
 
-        if config.fused:
-            block.append(ConvBNAct(config.in_ch, inter_channel, config.kernel, config.stride, 1, config.norm_layer, config.act))
+        if config.expand_ratio == 1:
+            block.append(('fused', ConvBNAct(config.in_ch, inter_channel, config.kernel, config.stride, 1, config.norm_layer, config.act)))
+        elif config.fused:
+            block.append(('fused', ConvBNAct(config.in_ch, inter_channel, config.kernel, config.stride, 1, config.norm_layer, config.act)))
+            block.append(('fused_point_wise', ConvBNAct(inter_channel, config.out_ch, 1, 1, 1, config.norm_layer, nn.Identity)))
         else:
-            block.append(ConvBNAct(config.in_ch, inter_channel, 1, 1, 1, config.norm_layer, config.act))
-            block.append(ConvBNAct(inter_channel, inter_channel, config.kernel, config.stride, inter_channel, config.norm_layer, config.act))
+            block.append(('linear_bottleneck', ConvBNAct(config.in_ch, inter_channel, 1, 1, 1, config.norm_layer, config.act)))
+            block.append(('depth_wise', ConvBNAct(inter_channel, inter_channel, config.kernel, config.stride, inter_channel, config.norm_layer, config.act)))
+            block.append(('se', SEUnit(inter_channel, 4 * config.expand_ratio)))
+            block.append(('point_wise', ConvBNAct(inter_channel, config.out_ch, 1, 1, 1, config.norm_layer, nn.Identity)))
 
-        if config.use_se:
-            block.append(SEUnit(inter_channel))
-
-        block.append(ConvBNAct(inter_channel, config.out_ch, 1, 1, 1, config.norm_layer, nn.Identity))
-        self.block = nn.Sequential(*block)
+        self.block = nn.Sequential(OrderedDict(block))
         self.use_skip_connection = config.stride == 1 and config.in_ch == config.out_ch
         self.stochastic_path = StochasticDepth(sd_prob, "row")
 
@@ -90,30 +92,28 @@ class MBConv(nn.Module):
 
 
 class EfficientNetV2(nn.Module):
-    def __init__(self, layer_infos, dropout=0.2, stochastic_depth=0.0, block=MBConv, act_layer=nn.SiLU, norm_layer=nn.BatchNorm2d):
+    def __init__(self, layer_infos, last_channel=1280, dropout=0.2, stochastic_depth=0.0, block=MBConv, act_layer=nn.SiLU, norm_layer=nn.BatchNorm2d):
         super(EfficientNetV2, self).__init__()
         self.layer_infos = layer_infos
         self.norm_layer = norm_layer
         self.act = act_layer
 
         self.in_channel = layer_infos[0].in_ch
-        self.last_channels = layer_infos[-1].out_ch
-        self.out_channels = self.last_channels * 4
+        self.final_stage_channel = layer_infos[-1].out_ch
+        self.last_channel = last_channel
 
         self.cur_block = 0
         self.num_block = sum(stage.num_layers for stage in layer_infos)
         self.stochastic_depth = stochastic_depth
 
-        self.features = nn.Sequential(
-            ConvBNAct(3, self.in_channel, 3, 2, 1, self.norm_layer, self.act),
-            *self.make_stages(layer_infos, block),
-            ConvBNAct(self.last_channels, self.out_channels, 1, 1, 1, self.norm_layer, self.act)
-        )
+        self.stem = ConvBNAct(3, self.in_channel, 3, 2, 1, self.norm_layer, self.act)
+        self.blocks = nn.Sequential(*self.make_stages(layer_infos, block))
+        self.head = ConvBNAct(self.final_stage_channel, last_channel, 1, 1, 1, self.norm_layer, self.act)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.dropout = nn.Dropout(p=dropout)
 
     def make_stages(self, layer_infos, block):
-        return [nn.Sequential(*self.make_layers(copy.copy(layer_info), block)) for layer_info in layer_infos]
+        return [layer for layer_info in layer_infos for layer in self.make_layers(copy.copy(layer_info), block)]
 
     def make_layers(self, layer_info, block):
         layers = []
@@ -129,7 +129,7 @@ class EfficientNetV2(nn.Module):
         return sd_prob
 
     def forward(self, x):
-        return self.dropout(torch.flatten(self.avg_pool(self.features(x)), 1))
+        return self.dropout(torch.flatten(self.avg_pool(self.head(self.features(self.stem(x)))), 1))
 
 
 def efficientnet_v2_init(model):
@@ -152,25 +152,50 @@ def get_efficientnet_v2(model_name, pretrained, **kwargs):
     # reference(official): https://github.com/google/automl/blob/master/efficientnetv2/effnetv2_configs.py
 
     if 'efficientnet_v2_s' in model_name:
-        dropout = 0.2
+        residual_config = [
+            #        expand k  s  in  out layers  se  fused
+            MBConvConfig(1, 3, 1, 24, 24, 2, use_se=False, fused=True),
+            MBConvConfig(4, 3, 2, 24, 48, 4, use_se=False, fused=True),
+            MBConvConfig(4, 3, 2, 48, 64, 4, use_se=False, fused=True),
+            MBConvConfig(4, 3, 2, 64, 128, 6, use_se=True, fused=False),
+            MBConvConfig(6, 3, 1, 128, 160, 9, use_se=True, fused=False),
+            MBConvConfig(6, 3, 2, 160, 256, 15, use_se=True, fused=False),
+        ]
     elif 'efficientnet_v2_m' in model_name:
-        dropout = 0.2
+        residual_config = [
+            #        expand k  s  in  out layers  se  fused
+            MBConvConfig(1, 3, 1, 24, 24, 3, use_se=False, fused=True),
+            MBConvConfig(4, 3, 2, 24, 48, 5, use_se=False, fused=True),
+            MBConvConfig(4, 3, 2, 48, 80, 5, use_se=False, fused=True),
+            MBConvConfig(4, 3, 2, 80, 160, 7, use_se=True, fused=False),
+            MBConvConfig(6, 3, 1, 160, 176, 14, use_se=True, fused=False),
+            MBConvConfig(6, 3, 2, 176, 304, 18, use_se=True, fused=False),
+            MBConvConfig(6, 3, 1, 304, 512, 5, use_se=True, fused=False),
+        ]
     elif 'efficientnet_v2_l' in model_name:
-        dropout = 0.3
+        residual_config = [
+            #        expand k  s  in  out layers  se  fused
+            MBConvConfig(1, 3, 1, 32, 32, 4, use_se=False, fused=True),
+            MBConvConfig(4, 3, 2, 32, 64, 7, use_se=False, fused=True),
+            MBConvConfig(4, 3, 2, 64, 96, 7, use_se=False, fused=True),
+            MBConvConfig(4, 3, 2, 96, 192, 10, use_se=True, fused=False),
+            MBConvConfig(6, 3, 1, 192, 224, 19, use_se=True, fused=False),
+            MBConvConfig(6, 3, 2, 224, 384, 25, use_se=True, fused=False),
+            MBConvConfig(6, 3, 1, 384, 640, 7, use_se=True, fused=False),
+        ]
     elif 'efficientnet_v2_xl' in model_name:
-        dropout = 0.3
+        residual_config = [
+            #        expand k  s  in  out layers  se  fused
+            MBConvConfig(1, 3, 1, 32, 32, 4, use_se=False, fused=True),
+            MBConvConfig(4, 3, 2, 32, 64, 8, use_se=False, fused=True),
+            MBConvConfig(4, 3, 2, 64, 96, 8, use_se=False, fused=True),
+            MBConvConfig(4, 3, 2, 96, 192, 16, use_se=True, fused=False),
+            MBConvConfig(6, 3, 1, 192, 256, 24, use_se=True, fused=False),
+            MBConvConfig(6, 3, 2, 256, 512, 32, use_se=True, fused=False),
+            MBConvConfig(6, 3, 1, 512, 640, 8, use_se=True, fused=False),
+        ]
 
-    residual_config = [
-        #    expand k  s  in  out layers  se  fused
-        MBConvConfig(1, 3, 1, 24, 24, 2, use_se=False, fused=True),
-        MBConvConfig(4, 3, 2, 24, 48, 4, use_se=False, fused=True),
-        MBConvConfig(4, 3, 2, 48, 64, 4, use_se=False, fused=True),
-        MBConvConfig(4, 3, 2, 64, 128, 6, use_se=True, fused=False),
-        MBConvConfig(6, 3, 1, 160, 160, 9, use_se=True, fused=False),
-        MBConvConfig(6, 5, 2, 160, 256, 15, use_se=True, fused=False),
-    ]
-
-    model = EfficientNetV2(residual_config, dropout=dropout, stochastic_depth=0.2, block=MBConv, act_layer=nn.SiLU)
+    model = EfficientNetV2(residual_config, 1280, dropout=0.1, stochastic_depth=0.2, block=MBConv, act_layer=nn.SiLU)
     efficientnet_v2_init(model)
 
     if pretrained:

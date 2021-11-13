@@ -11,7 +11,7 @@ data:
 # 2. define model (define other backbone)
 model:
   backbone_init:
-    model_name: "efficientnet_v2_s"
+    model_name: "efficientnet_v2_xl_in21k"
     pretrained: true
 
 # 3. prepare train tools (optimizer, learning rate scheduler)
