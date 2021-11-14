@@ -186,7 +186,7 @@ class EfficientNetV2(nn.Module):
         return self.head(self.blocks(self.stem(x)))
 
     def change_dropout_rate(self, p):
-        self.head = nn.Dropout(p=p)
+        self.head[-2] = nn.Dropout(p=p)
 
 
 def efficientnet_v2_init(model):
