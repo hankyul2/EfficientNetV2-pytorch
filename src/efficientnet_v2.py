@@ -1,8 +1,3 @@
-"""Pytorch Implementation of EfficientNetV2
-- reference 1 (pytorch): https://github.com/d-li14/efficientnetv2.pytorch/blob/main/effnetv2.py
-- reference 2 (official): https://github.com/google/automl/blob/master/efficientnetv2/effnetv2_configs.py
-"""
-
 import copy
 from functools import partial
 from collections import OrderedDict
@@ -15,6 +10,7 @@ from src.pretrained_weight_loader import load_from_zoo
 
 
 class BatchNorm2d(nn.BatchNorm2d):
+    """Redefine BatchNorm2d to copy running mean/var from tensorflow model"""
     def __init__(self, *args, **kwargs):
         super(BatchNorm2d, self).__init__(*args, **kwargs)
         self.running_mean = nn.Parameter(self.running_mean, requires_grad=False)
@@ -22,11 +18,21 @@ class BatchNorm2d(nn.BatchNorm2d):
 
 
 class ConvBNAct(nn.Sequential):
+    """Convolution-Normalization-Activation Module"""
     def __init__(self, in_channel, out_channel, kernel_size, stride, groups, norm_layer, act, conv_layer=nn.Conv2d):
-        super(ConvBNAct, self).__init__(conv_layer(in_channel, out_channel, kernel_size, stride=stride, padding=(kernel_size-1)//2, groups=groups, bias=False), norm_layer(out_channel), act())
+        super(ConvBNAct, self).__init__(
+            conv_layer(in_channel, out_channel, kernel_size, stride=stride, padding=(kernel_size-1)//2, groups=groups, bias=False),
+            norm_layer(out_channel),
+            act()
+        )
 
 
 class SEUnit(nn.Module):
+    """Squeeze-Excitation Unit
+
+    paper: https://openaccess.thecvf.com/content_cvpr_2018/html/Hu_Squeeze-and-Excitation_Networks_CVPR_2018_paper
+
+    """
     def __init__(self, in_channel, reduction_ratio=4, act1=partial(nn.SiLU, inplace=True), act2=nn.Sigmoid):
         super(SEUnit, self).__init__()
         hidden_dim = in_channel // reduction_ratio
@@ -41,6 +47,14 @@ class SEUnit(nn.Module):
 
 
 class StochasticDepth(nn.Module):
+    """StochasticDepth
+
+    paper: https://link.springer.com/chapter/10.1007/978-3-319-46493-0_39
+
+    :arg
+        - prob: Probability of dying
+        - mode: "row" or "all". "row" means that each row survives with different probability
+    """
     def __init__(self, prob, mode):
         super(StochasticDepth, self).__init__()
         self.prob = prob
@@ -56,7 +70,9 @@ class StochasticDepth(nn.Module):
 
 
 class MBConvConfig:
-    def __init__(self, expand_ratio, kernel, stride, in_ch, out_ch, layers, use_se, fused, act=nn.SiLU, norm_layer=BatchNorm2d):
+    """EfficientNet Building block configuration"""
+    def __init__(self, expand_ratio: float, kernel: int, stride: int, in_ch: int, out_ch: int, layers: int,
+                 use_se: bool, fused: bool, act=nn.SiLU, norm_layer=BatchNorm2d):
         self.expand_ratio = expand_ratio
         self.kernel = kernel
         self.stride = stride
@@ -77,24 +93,30 @@ class MBConvConfig:
 
 
 class MBConv(nn.Module):
-    def __init__(self, config, sd_prob=0.0):
+    """EfficientNet main building blocks
+
+    :arg
+        - c: MBConvConfig instance
+        - sd_prob: stochastic path probability
+    """
+    def __init__(self, c, sd_prob=0.0):
         super(MBConv, self).__init__()
-        inter_channel = config.adjust_channels(config.in_ch, config.expand_ratio)
+        inter_channel = c.adjust_channels(c.in_ch, c.expand_ratio)
         block = []
 
-        if config.expand_ratio == 1:
-            block.append(('fused', ConvBNAct(config.in_ch, inter_channel, config.kernel, config.stride, 1, config.norm_layer, config.act)))
-        elif config.fused:
-            block.append(('fused', ConvBNAct(config.in_ch, inter_channel, config.kernel, config.stride, 1, config.norm_layer, config.act)))
-            block.append(('fused_point_wise', ConvBNAct(inter_channel, config.out_ch, 1, 1, 1, config.norm_layer, nn.Identity)))
+        if c.expand_ratio == 1:
+            block.append(('fused', ConvBNAct(c.in_ch, inter_channel, c.kernel, c.stride, 1, c.norm_layer, c.act)))
+        elif c.fused:
+            block.append(('fused', ConvBNAct(c.in_ch, inter_channel, c.kernel, c.stride, 1, c.norm_layer, c.act)))
+            block.append(('fused_point_wise', ConvBNAct(inter_channel, c.out_ch, 1, 1, 1, c.norm_layer, nn.Identity)))
         else:
-            block.append(('linear_bottleneck', ConvBNAct(config.in_ch, inter_channel, 1, 1, 1, config.norm_layer, config.act)))
-            block.append(('depth_wise', ConvBNAct(inter_channel, inter_channel, config.kernel, config.stride, inter_channel, config.norm_layer, config.act)))
-            block.append(('se', SEUnit(inter_channel, 4 * config.expand_ratio)))
-            block.append(('point_wise', ConvBNAct(inter_channel, config.out_ch, 1, 1, 1, config.norm_layer, nn.Identity)))
+            block.append(('linear_bottleneck', ConvBNAct(c.in_ch, inter_channel, 1, 1, 1, c.norm_layer, c.act)))
+            block.append(('depth_wise', ConvBNAct(inter_channel, inter_channel, c.kernel, c.stride, inter_channel, c.norm_layer, c.act)))
+            block.append(('se', SEUnit(inter_channel, 4 * c.expand_ratio)))
+            block.append(('point_wise', ConvBNAct(inter_channel, c.out_ch, 1, 1, 1, c.norm_layer, nn.Identity)))
 
         self.block = nn.Sequential(OrderedDict(block))
-        self.use_skip_connection = config.stride == 1 and config.in_ch == config.out_ch
+        self.use_skip_connection = c.stride == 1 and c.in_ch == c.out_ch
         self.stochastic_path = StochasticDepth(sd_prob, "row")
 
     def forward(self, x):
@@ -105,7 +127,22 @@ class MBConv(nn.Module):
 
 
 class EfficientNetV2(nn.Module):
-    def __init__(self, layer_infos, out_channels=1280, nclass=0, dropout=0.2, stochastic_depth=0.0, block=MBConv, act_layer=nn.SiLU, norm_layer=BatchNorm2d):
+    """Pytorch Implementation of EfficientNetV2
+
+    paper: https://arxiv.org/abs/2104.00298
+
+    - reference 1 (pytorch): https://github.com/d-li14/efficientnetv2.pytorch/blob/main/effnetv2.py
+    - reference 2 (official): https://github.com/google/automl/blob/master/efficientnetv2/effnetv2_configs.py
+
+    :arg
+        - layer_infos: list of MBConvConfig
+        - out_channels: bottleneck channel
+        - nlcass: number of class
+        - dropout: dropout probability before classifier layer
+        - stochastic depth: stochastic depth probability
+    """
+    def __init__(self, layer_infos, out_channels=1280, nclass=0, dropout=0.2, stochastic_depth=0.0,
+                 block=MBConv, act_layer=nn.SiLU, norm_layer=BatchNorm2d):
         super(EfficientNetV2, self).__init__()
         self.layer_infos = layer_infos
         self.norm_layer = norm_layer
@@ -166,9 +203,9 @@ def efficientnet_v2_init(model):
             nn.init.zeros_(m.bias)
 
 
-def get_efficientnet_v2(model_name, pretrained, nclass=0, **kwargs):
+def get_efficientnet_v2(model_name, pretrained, nclass=0, dropout=0.1, stochastic_depth=0.2, **kwargs):
     residual_config = [MBConvConfig(*layer_config) for layer_config in get_efficientnet_v2_structure(model_name)]
-    model = EfficientNetV2(residual_config, 1280, nclass, dropout=0.1, stochastic_depth=0.2, block=MBConv, act_layer=nn.SiLU)
+    model = EfficientNetV2(residual_config, 1280, nclass, dropout=dropout, stochastic_depth=stochastic_depth, block=MBConv, act_layer=nn.SiLU)
     efficientnet_v2_init(model)
 
     if pretrained:
