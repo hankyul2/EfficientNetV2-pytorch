@@ -28,6 +28,8 @@ It contains:
 
 *How to train model on colab? please check [Colab EfficientNetV2-finetuning tutorial](https://colab.research.google.com/drive/1khaZWJDQJToR5GPNBJ01V6TXh8DXbKC_?usp=sharing)*
 
+See how cutmix, cutout, mixup works in [Colab Data augmentation tutorial](https://colab.research.google.com/drive/1L-vSgoPEuzdyD4W6hd5ChrgO9z4G1oue?usp=sharing)
+
 
 
 #### How to load pretrained model?
@@ -59,7 +61,7 @@ If you want to finetuning on cifar, use this repository.
 2. Train & Test model
 
    ```sh
-   python3 main.py fit --config config/base.yaml --trainer.gpus 0,3,6,7, --data.dataset_name cifar100 --seed_everything 2021
+   python3 main.py fit --config config/base.yaml --trainer.gpus 2, --data.dataset_name cifar100 --model.model_name efficientnet_v2_s  --seed_everything 2021
    ```
 
 
@@ -100,10 +102,10 @@ If you want to finetuning on cifar, use this repository.
 
 | Setup         | Contents                                                     |
 | ------------- | ------------------------------------------------------------ |
-| Data          | Cifar(ImgeSize=224, Cutout)                                  |
-| Model         | EfficientNetV2(Dropout=0.1, Stochastic_depth=0.2)            |
-| Optimizer     | SGD(weight_decay=0, momentum=True)                           |
-| Learning rate | CosineLearningRate(epoch=100, batch_size=512, lr=0.001, warmup=0) |
+| Data          | Cifar(ImgeSize=224, Cutmix)                                  |
+| Model         | EfficientNetV2(Dropout=0.0, Stochastic_depth=0.2)            |
+| Optimizer     | SGD(weight_decay=1e-5, momentum=True)                        |
+| Learning rate | CosineLearningRate(epoch=100, batch_size=32, lr=0.01, warmup=1) |
 
 *Note*
 
