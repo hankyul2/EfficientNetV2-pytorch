@@ -24,11 +24,13 @@ It contains:
 
 ## Tutorial
 
-*How to use model on colab? please check [Colab EfficientNetV2-predict tutorial](https://colab.research.google.com/drive/1BYUeRVsVmBC4AuMyW-gkDboUVDX_jFrI?usp=sharing)*
+Colab Tutorial
 
-*How to train model on colab? please check [Colab EfficientNetV2-finetuning tutorial](https://colab.research.google.com/drive/1khaZWJDQJToR5GPNBJ01V6TXh8DXbKC_?usp=sharing)*
+- How to use model on colab? please check [Colab EfficientNetV2-predict tutorial](https://colab.research.google.com/drive/1BYUeRVsVmBC4AuMyW-gkDboUVDX_jFrI?usp=sharing)
 
-See how cutmix, cutout, mixup works in [Colab Data augmentation tutorial](https://colab.research.google.com/drive/1L-vSgoPEuzdyD4W6hd5ChrgO9z4G1oue?usp=sharing)
+- How to train model on colab? please check [Colab EfficientNetV2-finetuning tutorial](https://colab.research.google.com/drive/1khaZWJDQJToR5GPNBJ01V6TXh8DXbKC_?usp=sharing)
+
+- See how cutmix, cutout, mixup works in [Colab Data augmentation tutorial](https://colab.research.google.com/drive/1L-vSgoPEuzdyD4W6hd5ChrgO9z4G1oue?usp=sharing)
 
 
 
@@ -105,7 +107,7 @@ If you want to finetuning on cifar, use this repository.
 | Data          | Cifar(ImgeSize=224, Cutmix)                                  |
 | Model         | EfficientNetV2(Dropout=0.0, Stochastic_depth=0.2)            |
 | Optimizer     | SGD(weight_decay=1e-5, momentum=True)                        |
-| Learning rate | CosineLearningRate(epoch=100, batch_size=32, lr=0.01, warmup=1) |
+| Learning rate | CosineLearningRate(epoch=100, batch_size=32, lr=0.001, warmup=1) |
 
 *Note*
 
