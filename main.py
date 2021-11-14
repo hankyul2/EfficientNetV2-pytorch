@@ -1,12 +1,11 @@
 import os
 import warnings
 
-from torch.optim import SGD
-
 warnings.filterwarnings('ignore')
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 
 from torch import nn
+from torch.optim import SGD
 from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities.cli import instantiate_class, LightningCLI
 from torchmetrics import MetricCollection, Accuracy
@@ -14,11 +13,12 @@ from torchmetrics import MetricCollection, Accuracy
 from src.cifar import CIFAR
 from src.efficientnet_v2 import get_efficientnet_v2
 from src.lr_scheduler import CosineLR
+from src.data_augmentation import cutmix, cutout, mixup
 
 
 class BaseVisionSystem(LightningModule):
-    def __init__(self, backbone_init: dict, num_classes: int, num_step: int, gpus: str, max_epochs: int,
-                 optimizer_init: dict, lr_scheduler_init: dict):
+    def __init__(self, model_name: str, model_args: dict, num_classes: int, num_step: int, gpus: str, max_epochs: int,
+                 optimizer_init: dict, lr_scheduler_init: dict, augmentation: str):
         """ Define base vision classification system
         :arg
             backbone_init: feature extractor
@@ -32,11 +32,12 @@ class BaseVisionSystem(LightningModule):
         super(BaseVisionSystem, self).__init__()
 
         # step 1. save data related info (not defined here)
+        self.augmentation = augmentation
         self.num_step = num_step // (len(gpus.split(','))-1)
         self.max_epochs = max_epochs
 
         # step 2. define model
-        self.backbone = get_efficientnet_v2(**backbone_init)
+        self.backbone = get_efficientnet_v2(model_name, **model_args)
         self.fc = nn.Linear(self.backbone.out_channels, num_classes)
 
         # step 3. define lr tools (optimizer, lr scheduler)
@@ -71,7 +72,24 @@ class BaseVisionSystem(LightningModule):
         return loss
 
     def compute_loss(self, x, y):
-        return self.compute_loss_eval(x, y)
+        if self.augmentation == 'default':
+            return self.compute_loss_eval(x, y)
+
+        elif self.augmentation == 'mixup':
+            x, y1, y2, ratio = mixup(x, y)
+            y_hat = self.fc(self.backbone(x))
+            loss = self.criterion(y_hat, y1) * ratio + self.criterion(y_hat, y2) * (1 - ratio)
+            return loss, y_hat
+
+        elif self.augmentation == 'cutout':
+            x, y, ratio = cutout(x, y)
+            return self.compute_loss_eval(x, y)
+
+        elif self.augmentation == 'cutmix':
+            x, y1, y2, ratio = cutmix(x, y)
+            y_hat = self.fc(self.backbone(x))
+            loss = self.criterion(y_hat, y1) * ratio + self.criterion(y_hat, y2) * (1 - ratio)
+            return loss, y_hat
 
     def compute_loss_eval(self, x, y):
         y_hat = self.fc(self.backbone(x))
