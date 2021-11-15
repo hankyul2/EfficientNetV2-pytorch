@@ -74,15 +74,15 @@ If you want to finetuning on cifar, use this repository.
 
 *coming soon*
 
-| Model Name              | Pretrained Dataset | Cifar10 | Cifar100 |
-| ----------------------- | ------------------ | ------- | -------- |
-| EfficientNetV2-S        | ImageNet           | -       | -        |
-| EfficientNetV2-M        | ImageNet           | -       | -        |
-| EfficientNetV2-L        | ImageNet           | -       | -        |
-| EfficientNetV2-S-in21k  | ImageNet21k        | -       | -        |
-| EfficientNetV2-M-in21k  | ImageNet21k        | -       | -        |
-| EfficientNetV2-L-in21k  | ImageNet21k        | -       | -        |
-| EfficientNetV2-XL-in21k | ImageNet21k        | -       | -        |
+| Model Name              | Pretrained Dataset | Cifar10 | Cifar100  |
+| ----------------------- | ------------------ | ------- | --------- |
+| EfficientNetV2-S        | ImageNet           | 97.98   | 88.53     |
+| EfficientNetV2-M        | ImageNet           | 98.38   | 85.81 (🤔) |
+| EfficientNetV2-L        | ImageNet           | -       | -         |
+| EfficientNetV2-S-in21k  | ImageNet21k        | -       | -         |
+| EfficientNetV2-M-in21k  | ImageNet21k        | -       | -         |
+| EfficientNetV2-L-in21k  | ImageNet21k        | -       | -         |
+| EfficientNetV2-XL-in21k | ImageNet21k        | -       | -         |
 
 
 

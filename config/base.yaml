@@ -19,7 +19,7 @@ model:
 optimizer:
   class_path: torch.optim.SGD
   init_args:
-    lr: 0.001
+    lr: 0.01
     momentum: 0.95
     weight_decay: 0.0005
 
