@@ -72,17 +72,20 @@ If you want to finetuning on cifar, use this repository.
 
 ## Experiment Results
 
-*coming soon*
-
 | Model Name              | Pretrained Dataset | Cifar10 | Cifar100  |
 | ----------------------- | ------------------ | ------- | --------- |
 | EfficientNetV2-S        | ImageNet           | 97.98   | 88.53     |
 | EfficientNetV2-M        | ImageNet           | 98.38   | 85.81 (🤔) |
-| EfficientNetV2-L        | ImageNet           | -       | -         |
-| EfficientNetV2-S-in21k  | ImageNet21k        | -       | -         |
-| EfficientNetV2-M-in21k  | ImageNet21k        | -       | -         |
-| EfficientNetV2-L-in21k  | ImageNet21k        | -       | -         |
+| EfficientNetV2-L        | ImageNet           | 98.4    | -         |
+| EfficientNetV2-S-in21k  | ImageNet21k        | 98.1    | 89.2      |
+| EfficientNetV2-M-in21k  | ImageNet21k        | 98.2    | 89.5      |
+| EfficientNetV2-L-in21k  | ImageNet21k        | 98.2    | 90.1      |
 | EfficientNetV2-XL-in21k | ImageNet21k        | -       | -         |
+
+*Note*
+
+1. Training Results are not good enough to match with paper results
+2. All models are trained using same setup in experiment setup section (which is adapted from paper)
 
 
 
