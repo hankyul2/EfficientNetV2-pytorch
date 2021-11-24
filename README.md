@@ -3,7 +3,7 @@ Unofficial EfficientNetV2 pytorch implementation repository.
 
 It contains:
 
-- Simple Implementation of model ([here](src/efficientnetv2.py))
+- Simple Implementation of model ([here](efficientnetv2/efficientnetv2.py))
 - Pretrained Model ([numpy weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases), we upload numpy files converted from official tensorflow checkout point)
 - Training code ([here](main.py))
 - Tutorial ([Colab EfficientNetV2-predict tutorial](https://colab.research.google.com/drive/1BYUeRVsVmBC4AuMyW-gkDboUVDX_jFrI?usp=sharing), [Colab EfficientNetV2-finetuning tutorial](https://colab.research.google.com/drive/1khaZWJDQJToR5GPNBJ01V6TXh8DXbKC_?usp=sharing))
@@ -117,7 +117,7 @@ If you want to finetuning on cifar, use this repository.
 1. For progressive learning, `ImageSize`, `RandAugmentation`, `Mixup`, `Dropout` are going to be changed along with epoch.
 2. Evaluation Size is different for each model
 3. `epoch=100` in *Cifar Stepup* is calculated from paper like this: `10,000 step * 512 batch size / 50,000 images = 102.4`
-4. To see more model specific details, check [efficientnet_v2_config.py](src/efficientnetv2_config.py)
+4. To see more model specific details, check [efficientnet_v2_config.py](efficientnetv2/efficientnetv2_config.py)
 5. To see more train hyperparameter, check [cifar.yaml](config/base.yaml)
 
 

@@ -10,10 +10,10 @@ from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities.cli import instantiate_class, LightningCLI
 from torchmetrics import MetricCollection, Accuracy
 
-from src.cifar import CIFAR
-from src.efficientnet_v2 import get_efficientnet_v2
-from src.lr_scheduler import CosineLR
-from src.data_augmentation import cutmix, cutout, mixup
+from utils.cifar import CIFAR
+from efficientnetv2.efficientnet_v2 import get_efficientnet_v2
+from utils.lr_scheduler import CosineLR
+from utils.data_augmentation import cutmix, cutout, mixup
 
 
 class BaseVisionSystem(LightningModule):

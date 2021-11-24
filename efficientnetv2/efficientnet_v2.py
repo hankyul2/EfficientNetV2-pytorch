@@ -5,8 +5,8 @@ from collections import OrderedDict
 import torch
 from torch import nn
 
-from src.efficientnetv2_config import get_efficientnet_v2_structure
-from src.pretrained_weight_loader import load_from_zoo
+from efficientnetv2.efficientnetv2_config import get_efficientnet_v2_structure
+from efficientnetv2.pretrained_weight_loader import load_from_zoo
 
 
 class BatchNorm2d(nn.BatchNorm2d):

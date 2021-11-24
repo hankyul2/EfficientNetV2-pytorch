@@ -1,6 +1,6 @@
 dependencies = ['torch', 'numpy']
 
-from src.efficientnet_v2 import get_efficientnet_v2
+from efficientnetv2 import get_efficientnet_v2
 
 
 def efficientnet_v2_s(pretrained=False, nclass=1000, **kwargs):
