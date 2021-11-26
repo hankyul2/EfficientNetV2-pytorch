@@ -162,7 +162,7 @@ class EfficientNetV2(nn.Module):
             ('bottleneck', ConvBNAct(self.final_stage_channel, out_channels, 1, 1, 1, self.norm_layer, self.act)),
             ('avgpool', nn.AdaptiveAvgPool2d((1, 1))),
             ('flatten', nn.Flatten()),
-            ('dropout', nn.Dropout(p=dropout)),
+            ('dropout', nn.Dropout(p=dropout, inplace=True)),
             ('classifier', nn.Linear(out_channels, nclass) if nclass else nn.Identity())
         ]))
 
@@ -186,7 +186,7 @@ class EfficientNetV2(nn.Module):
         return self.head(self.blocks(self.stem(x)))
 
     def change_dropout_rate(self, p):
-        self.head[-2] = nn.Dropout(p=p)
+        self.head[-2] = nn.Dropout(p=p, inplace=True)
 
 
 def efficientnet_v2_init(model):
