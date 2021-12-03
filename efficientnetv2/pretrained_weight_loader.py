@@ -109,11 +109,13 @@ def load_npy(model, weight):
         ('\\.(\\d+)\\.', lambda x: f'_{int(x.group(1))}/'),
     ]
 
-    for name, param in model.named_parameters():
+    for name, param in list(model.named_parameters()) + list(model.named_buffers()):
         for pattern, sub in name_convertor:
             name = re.sub(pattern, sub, name)
         if 'dense/kernel' in name and list(param.shape) not in [[1000, 1280], [21843, 1280]]:
             continue
         if 'dense/bias' in name and list(param.shape) not in [[1000], [21843]]:
+            continue
+        if 'num_batches_tracked' in name:
             continue
         param.data.copy_(npz_dim_convertor(name, weight.get(name)))

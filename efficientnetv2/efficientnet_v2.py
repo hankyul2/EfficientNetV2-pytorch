@@ -9,14 +9,6 @@ from efficientnetv2.efficientnetv2_config import get_efficientnet_v2_structure
 from efficientnetv2.pretrained_weight_loader import load_from_zoo
 
 
-class BatchNorm2d(nn.BatchNorm2d):
-    """Redefine BatchNorm2d to copy running mean/var from tensorflow model"""
-    def __init__(self, *args, **kwargs):
-        super(BatchNorm2d, self).__init__(*args, **kwargs)
-        self.running_mean = nn.Parameter(self.running_mean, requires_grad=False)
-        self.running_var = nn.Parameter(self.running_var, requires_grad=False)
-
-
 class ConvBNAct(nn.Sequential):
     """Convolution-Normalization-Activation Module"""
     def __init__(self, in_channel, out_channel, kernel_size, stride, groups, norm_layer, act, conv_layer=nn.Conv2d):
@@ -72,7 +64,7 @@ class StochasticDepth(nn.Module):
 class MBConvConfig:
     """EfficientNet Building block configuration"""
     def __init__(self, expand_ratio: float, kernel: int, stride: int, in_ch: int, out_ch: int, layers: int,
-                 use_se: bool, fused: bool, act=nn.SiLU, norm_layer=BatchNorm2d):
+                 use_se: bool, fused: bool, act=nn.SiLU, norm_layer=nn.BatchNorm2d):
         self.expand_ratio = expand_ratio
         self.kernel = kernel
         self.stride = stride
@@ -142,7 +134,7 @@ class EfficientNetV2(nn.Module):
         - stochastic depth: stochastic depth probability
     """
     def __init__(self, layer_infos, out_channels=1280, nclass=0, dropout=0.2, stochastic_depth=0.0,
-                 block=MBConv, act_layer=nn.SiLU, norm_layer=BatchNorm2d):
+                 block=MBConv, act_layer=nn.SiLU, norm_layer=nn.BatchNorm2d):
         super(EfficientNetV2, self).__init__()
         self.layer_infos = layer_infos
         self.norm_layer = norm_layer
