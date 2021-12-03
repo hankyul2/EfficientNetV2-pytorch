@@ -24,7 +24,7 @@ optimizer:
     weight_decay: 0.0005
 
 lr_scheduler:
-  class_path: src.lr_scheduler.CosineLR
+  class_path: utils.lr_scheduler.CosineLR
   init_args:
     max_epochs: 0
     num_step: 0
