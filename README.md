@@ -72,20 +72,20 @@ If you want to finetuning on cifar, use this repository.
 
 ## Experiment Results
 
-| Model Name              | Pretrained Dataset | Cifar10 | Cifar100  |
-| ----------------------- | ------------------ | ------- | --------- |
-| EfficientNetV2-S        | ImageNet           | 97.98   | 88.53     |
-| EfficientNetV2-M        | ImageNet           | 98.38   | 85.81 (🤔) |
-| EfficientNetV2-L        | ImageNet           | 98.4    | -         |
-| EfficientNetV2-S-in21k  | ImageNet21k        | 98.1    | 89.2      |
-| EfficientNetV2-M-in21k  | ImageNet21k        | 98.2    | 89.5      |
-| EfficientNetV2-L-in21k  | ImageNet21k        | 98.2    | 90.1      |
-| EfficientNetV2-XL-in21k | ImageNet21k        | -       | -         |
+| Model Name              | Pretrained Dataset | Cifar10                                                      | Cifar100                                                     |
+| ----------------------- | ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| EfficientNetV2-S        | ImageNet           | 98.46 ([tf.dev](https://tensorboard.dev/experiment/HQqb9kYXQ1yLCdfLGQT7yQ/),) | 90.05 ([tf.dev](https://tensorboard.dev/experiment/euwy6Rv6RR2RUlLw6Dqi2g/),) |
+| EfficientNetV2-M        | ImageNet           | 98.89 ([tf.dev](https://tensorboard.dev/experiment/GyJwToamQ5q5nHZARL5n2Q/),) | 91.54 ([tf.dev](https://tensorboard.dev/experiment/mVj4XfD4QwyGdGv5EV3H0A/),) |
+| EfficientNetV2-L        | ImageNet           | 98.80 ([tf.dev](https://tensorboard.dev/experiment/BGRZvE0OS6WU3CqybE25vg/),) | 91.88 ([tf.dev](https://tensorboard.dev/experiment/QYjNoNKyTwmHBvBeL5NRqQ/),) |
+| EfficientNetV2-S-in21k  | ImageNet21k        | 98.50 ([tf.dev](https://tensorboard.dev/experiment/f44EqAzLR2S2831tqfrZEw/),) | 90.96 ([tf.dev](https://tensorboard.dev/experiment/PnByKdA4RKeiaJ8YH2nr5Q/),) |
+| EfficientNetV2-M-in21k  | ImageNet21k        | 98.70 ([tf.dev](https://tensorboard.dev/experiment/b0pd5LxeRTOmXMOibaFz7Q/),) | 92.06 ([tf.dev](https://tensorboard.dev/experiment/NZhXuDFmRH6k9as5D7foBg/),) |
+| EfficientNetV2-L-in21k  | ImageNet21k        | 98.78 ([tf.dev](https://tensorboard.dev/experiment/GngI0UD5QbanKHKnLdVCWA/),) | 92.08 ([tf.dev](https://tensorboard.dev/experiment/99VVMfMORYC3UmOePzRakg/),) |
+| EfficientNetV2-XL-in21k | ImageNet21k        | -                                                            | -                                                            |
 
 *Note*
 
 1. Training Results are not good enough to match with paper results
-2. All models are trained using same setup in experiment setup section (which is adapted from paper)
+2. All model weights and code will be updated soon! (winter vacation begin!!)
 
 
 
@@ -93,32 +93,24 @@ If you want to finetuning on cifar, use this repository.
 
 ## Experiment Setup
 
-*ImageNet Setup*
+1. *Cifar setup*
 
-| Setup         | Contents                                                     |
-| ------------- | ------------------------------------------------------------ |
-| Data          | ImageNet(ImgeSize=128, RandAugmentation=5, Mixup=0)          |
-| Model         | EfficientNetV2(Dropout=0.1, Stochastic_depth=0.2)            |
-| Optimizer     | RMSProp(decay=0.9, batch_norm_momentum=0.99, weight_decay=1e-5, momentum=0.9) |
-| Learning rate | (epoch=350, batch_size=4096, lr=0.256, warmup=?) learning rate decay by 0.97 every 2.4 epochs |
-| EMA           | decay_rate=0.9999                                            |
+   | Category           | Contents                                                     |
+   | ------------------ | ------------------------------------------------------------ |
+   | Dataset            | CIFAR10 \| CIFAR100                                          |
+   | Batch_size per gpu | (s, m, l) = (256, 128, 64)                                   |
+   | Train Augmentation | image_size = 224, horizontal flip, random_crop (pad=4), CutMix(prob=1.0) |
+   | Test Augmentation  | image_size = 224, center_crop                                |
+   | Model              | EfficientNetV2 s \| m \| l (pretrained on in1k or in21k)     |
+   | Regularization     | Dropout=0.0, Stochastic_path=0.2, BatchNorm                  |
+   | Optimizer          | AdamW(weight_decay=0.005)                                    |
+   | Criterion          | Label Smoothing (CrossEntropyLoss)                           |
+   | LR Scheduler       | LR: (s, m, l) = (0.001, 0.0005, 0.0003), LR scheduler: OneCycle Learning Rate(epoch=20) |
+   | GPUs & ETC         | 16 precision<br />EMA(decay=0.999, 0.9993, 0.9995)<br />S - 2 * 3090 (batch size 512)<br />M - 2 * 3090 (batch size 256)<br />L - 2 * 3090 (batch size 128) |
 
-*Cifar Setup*
+   *Notes*
 
-| Setup         | Contents                                                     |
-| ------------- | ------------------------------------------------------------ |
-| Data          | Cifar(ImgeSize=224, Cutmix)                                  |
-| Model         | EfficientNetV2(Dropout=0.0, Stochastic_depth=0.2)            |
-| Optimizer     | SGD(weight_decay=1e-5, momentum=True)                        |
-| Learning rate | CosineLearningRate(epoch=100, batch_size=32, lr=0.001, warmup=1) |
-
-*Note*
-
-1. For progressive learning, `ImageSize`, `RandAugmentation`, `Mixup`, `Dropout` are going to be changed along with epoch.
-2. Evaluation Size is different for each model
-3. `epoch=100` in *Cifar Stepup* is calculated from paper like this: `10,000 step * 512 batch size / 50,000 images = 102.4`
-4. To see more model specific details, check [efficientnet_v2_config.py](efficientnetv2/efficientnetv2_config.py)
-5. To see more train hyperparameter, check [cifar.yaml](config/base.yaml)
+   1. LR, EMA decay, rand_augmentation are affected by batch_size and epoch. So if you change batch size, you also change mentioned parameters. 
 
 
 
