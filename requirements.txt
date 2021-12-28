@@ -9,6 +9,8 @@ torchmetrics
 numpy
 python-box
 einops
+rich
+timm
 
 # Logger
 tensorboard

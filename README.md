@@ -60,10 +60,10 @@ If you want to finetuning on cifar, use this repository.
    pip3 install requirements.txt
    ```
 
-2. Train & Test model
+2. Train & Test model (see more examples in [tmuxp/cifar.yaml](tmuxp/cifar.yaml))
 
    ```sh
-   python3 main.py fit --config config/base.yaml --trainer.gpus 2, --data.dataset_name cifar100 --model.model_name efficientnet_v2_s  --seed_everything 2021
+   python3 main.py fit --config config/efficientnetv2_s/cifar10.yaml --trainer.gpus 2,3,
    ```
 
 
@@ -74,18 +74,27 @@ If you want to finetuning on cifar, use this repository.
 
 | Model Name              | Pretrained Dataset | Cifar10                                                      | Cifar100                                                     |
 | ----------------------- | ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| EfficientNetV2-S        | ImageNet           | 98.46 ([tf.dev](https://tensorboard.dev/experiment/HQqb9kYXQ1yLCdfLGQT7yQ/),) | 90.05 ([tf.dev](https://tensorboard.dev/experiment/euwy6Rv6RR2RUlLw6Dqi2g/),) |
-| EfficientNetV2-M        | ImageNet           | 98.89 ([tf.dev](https://tensorboard.dev/experiment/GyJwToamQ5q5nHZARL5n2Q/),) | 91.54 ([tf.dev](https://tensorboard.dev/experiment/mVj4XfD4QwyGdGv5EV3H0A/),) |
-| EfficientNetV2-L        | ImageNet           | 98.80 ([tf.dev](https://tensorboard.dev/experiment/BGRZvE0OS6WU3CqybE25vg/),) | 91.88 ([tf.dev](https://tensorboard.dev/experiment/QYjNoNKyTwmHBvBeL5NRqQ/),) |
-| EfficientNetV2-S-in21k  | ImageNet21k        | 98.50 ([tf.dev](https://tensorboard.dev/experiment/f44EqAzLR2S2831tqfrZEw/),) | 90.96 ([tf.dev](https://tensorboard.dev/experiment/PnByKdA4RKeiaJ8YH2nr5Q/),) |
-| EfficientNetV2-M-in21k  | ImageNet21k        | 98.70 ([tf.dev](https://tensorboard.dev/experiment/b0pd5LxeRTOmXMOibaFz7Q/),) | 92.06 ([tf.dev](https://tensorboard.dev/experiment/NZhXuDFmRH6k9as5D7foBg/),) |
-| EfficientNetV2-L-in21k  | ImageNet21k        | 98.78 ([tf.dev](https://tensorboard.dev/experiment/GngI0UD5QbanKHKnLdVCWA/),) | 92.08 ([tf.dev](https://tensorboard.dev/experiment/99VVMfMORYC3UmOePzRakg/),) |
+| EfficientNetV2-S        | ImageNet           | 98.46 ([tf.dev](https://tensorboard.dev/experiment/HQqb9kYXQ1yLCdfLGQT7yQ/), [weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases/download/EfficientNetV2-pytorch-cifar/efficientnet_v2_s_cifar10.pth)) | 90.05 ([tf.dev](https://tensorboard.dev/experiment/euwy6Rv6RR2RUlLw6Dqi2g/), [weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases/download/EfficientNetV2-pytorch-cifar/efficientnet_v2_s_cifar100.pth)) |
+| EfficientNetV2-M        | ImageNet           | 98.89 ([tf.dev](https://tensorboard.dev/experiment/GyJwToamQ5q5nHZARL5n2Q/), [weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases/download/EfficientNetV2-pytorch-cifar/efficientnet_v2_m_cifar10.pth)) | 91.54 ([tf.dev](https://tensorboard.dev/experiment/mVj4XfD4QwyGdGv5EV3H0A/), [weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases/download/EfficientNetV2-pytorch-cifar/efficientnet_v2_m_cifar100.pth)) |
+| EfficientNetV2-L        | ImageNet           | 98.80 ([tf.dev](https://tensorboard.dev/experiment/BGRZvE0OS6WU3CqybE25vg/), [weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases/download/EfficientNetV2-pytorch-cifar/efficientnet_v2_l_cifar10.pth)) | 91.88 ([tf.dev](https://tensorboard.dev/experiment/QYjNoNKyTwmHBvBeL5NRqQ/), [weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases/download/EfficientNetV2-pytorch-cifar/efficientnet_v2_l_cifar100.pth)) |
+| EfficientNetV2-S-in21k  | ImageNet21k        | 98.50 ([tf.dev](https://tensorboard.dev/experiment/f44EqAzLR2S2831tqfrZEw/), [weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases/download/EfficientNetV2-pytorch-cifar/efficientnet_v2_s_in21k_cifar10.pth)) | 90.96 ([tf.dev](https://tensorboard.dev/experiment/PnByKdA4RKeiaJ8YH2nr5Q/), [weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases/download/EfficientNetV2-pytorch-cifar/efficientnet_v2_s_in21k_cifar100.pth)) |
+| EfficientNetV2-M-in21k  | ImageNet21k        | 98.70 ([tf.dev](https://tensorboard.dev/experiment/b0pd5LxeRTOmXMOibaFz7Q/), [weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases/download/EfficientNetV2-pytorch-cifar/efficientnet_v2_m_21k_cifar100.pth)) | 92.06 ([tf.dev](https://tensorboard.dev/experiment/NZhXuDFmRH6k9as5D7foBg/), [weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases/download/EfficientNetV2-pytorch-cifar/efficientnet_v2_m_in21k_cifar100.pth)) |
+| EfficientNetV2-L-in21k  | ImageNet21k        | 98.78 ([tf.dev](https://tensorboard.dev/experiment/GngI0UD5QbanKHKnLdVCWA/), [weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases/download/EfficientNetV2-pytorch-cifar/efficientnet_v2_l_in21k_cifar10.pth)) | 92.08 ([tf.dev](https://tensorboard.dev/experiment/99VVMfMORYC3UmOePzRakg/), [weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases/download/EfficientNetV2-pytorch-cifar/efficientnet_v2_l_in21k_cifar100.pth)) |
 | EfficientNetV2-XL-in21k | ImageNet21k        | -                                                            | -                                                            |
 
 *Note*
 
-1. Training Results are not good enough to match with paper results
-2. All model weights and code will be updated soon! (winter vacation begin!!)
+1. The results are combination of
+   - `Half precision` 
+   - `Super Convergence(epoch=20)` 
+   - `AdamW(weight_decay=0.005)`
+   - `EMA(decay=0.999)` 
+   - `cutmix(prob=1.0)`
+2. Changes from original paper (CIFAR)
+   1. We just run 20 epochs to got above results. If you run more epochs, you can get more higher accuracy.
+   2. What we changed from original setup are: optimizer(`SGD` to `AdamW`), LR scheduler(`cosinelr` to `onecylelr`), augmentation(`cutout` to `cutmix`), image size (384 to 224), epoch (105 to 20). As you can see, even if we train smaller images with shorten epochs, our trained accuracies are not that lower than original setup.
+   3. Important hyper-parameter(most important to least important): LR->weigth_decay->ema-decay->cutmix_prob->epoch.
+3. you can get same results by running `tmuxp/cifar.yaml`
 
 
 
@@ -108,9 +117,6 @@ If you want to finetuning on cifar, use this repository.
    | LR Scheduler       | LR: (s, m, l) = (0.001, 0.0005, 0.0003), LR scheduler: OneCycle Learning Rate(epoch=20) |
    | GPUs & ETC         | 16 precision<br />EMA(decay=0.999, 0.9993, 0.9995)<br />S - 2 * 3090 (batch size 512)<br />M - 2 * 3090 (batch size 256)<br />L - 2 * 3090 (batch size 128) |
 
-   *Notes*
-
-   1. LR, EMA decay, rand_augmentation are affected by batch_size and epoch. So if you change batch size, you also change mentioned parameters. 
 
 
 
@@ -127,4 +133,5 @@ EfficientNetV2
 - Link: [Paper](https://arxiv.org/abs/2104.00298) | [official tensorflow repo](https://github.com/google/automl/tree/master/efficientnetv2) | [other pytorch repo](https://github.com/d-li14/efficientnetv2.pytorch)
 - Other references: 
   - [Training ImageNet in 3 hours for USD 25; and CIFAR10 for USD 0.26](https://www.fast.ai/2018/04/30/dawnbench-fastai/)
+  - [AdamW and Super-convergence is now the fastest way to train neural nets](https://www.fast.ai/2018/07/02/adam-weight-decay/)
 
