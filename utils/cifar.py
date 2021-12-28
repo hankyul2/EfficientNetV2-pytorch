@@ -38,6 +38,8 @@ class BaseDataModule(pl.LightningDataModule):
         self.num_workers = num_workers
         self.data_root = data_root
         self.valid_ratio = valid_ratio
+        self.train_data_len = None
+        self.test_data_len = None
         self.num_classes = None
         self.num_step = None
         self.prepare_data()
@@ -47,20 +49,13 @@ class BaseDataModule(pl.LightningDataModule):
         test = self.dataset(root=self.data_root, train=False, download=True)
         self.num_classes = len(train.classes)
         self.num_step = len(train) // self.batch_size
-
-        print('-' * 50)
-        print('* {} dataset class num: {}'.format(self.dataset_name, len(train.classes)))
-        print('* {} train dataset len: {}'.format(self.dataset_name, len(train)))
-        print('* {} test dataset len: {}'.format(self.dataset_name, len(test)))
-        print('-' * 50)
+        self.train_data_len = len(train)
+        self.test_data_len = len(test)
 
     def setup(self, stage: str = None):
-        if stage in (None, 'fit'):
-            ds = self.dataset(root=self.data_root, train=True, transform=self.train_transform)
-            self.train_ds, self.valid_ds = self.split_train_valid(ds)
-
-        elif stage in (None, 'test', 'predict'):
-            self.test_ds = self.dataset(root=self.data_root, train=False, transform=self.test_transform)
+        ds = self.dataset(root=self.data_root, train=True, transform=self.train_transform)
+        self.train_ds, self.valid_ds = self.split_train_valid(ds)
+        self.test_ds = self.dataset(root=self.data_root, train=False, transform=self.test_transform)
 
     def split_train_valid(self, ds):
         ds_len = len(ds)

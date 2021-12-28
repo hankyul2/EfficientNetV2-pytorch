@@ -1,0 +1,13 @@
+session_name: efficientnet_v2
+windows:
+  - window_name: cifar
+    shell_command_before:
+      - source ~/.bashrc
+    panes:
+      - shell_command:
+        - python3 main.py fit --config config/efficientnetv2_s/cifar10.yaml --trainer.gpus 2,3,
+        - python3 main.py fit --config config/efficientnetv2_s/cifar100.yaml --trainer.gpus 2,3,
+        - python3 main.py fit --config config/efficientnetv2_m/cifar10.yaml --trainer.gpus 2,3,
+        - python3 main.py fit --config config/efficientnetv2_m/cifar100.yaml --trainer.gpus 2,3,
+        - python3 main.py fit --config config/efficientnetv2_l/cifar10.yaml --trainer.gpus 2,3,
+        - python3 main.py fit --config config/efficientnetv2_l/cifar100.yaml --trainer.gpus 2,3,

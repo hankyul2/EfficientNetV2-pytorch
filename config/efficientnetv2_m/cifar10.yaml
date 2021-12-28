@@ -1,0 +1,56 @@
+data:
+  dataset_name: "cifar10"
+  batch_size: 128
+  num_workers: 4
+  size:
+  - 224
+  - 224
+  data_root: data
+  valid_ratio: 0.1
+
+# 2. define model (define other backbone)
+model:
+  model_name: 'efficientnet_v2_m'
+  pretrained: true
+  augmentation: 'cutmix'
+
+# 3. prepare train tools (optimizer, learning rate scheduler)
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 0.0005
+    weight_decay: 0.005
+
+lr_scheduler:
+  class_path: torch.optim.lr_scheduler.OneCycleLR
+  init_args:
+    max_lr: 0.0 # don't change this
+    total_steps: 0
+
+# 4. train
+seed_everything: 2021
+trainer:
+  # 4-1. gpu devices
+  gpus: null
+  strategy: ddp_find_unused_parameters_false
+  amp_backend: native
+
+  # 4-2. train setting
+  max_epochs: 20
+
+  # 4-3. logger & callbacks
+  log_every_n_steps: 50
+  callbacks:
+    - class_path: utils.ema.EMACallback
+      init_args:
+        decay: 0.9993
+    - class_path: utils.rich_data_summary.RichDataSummary
+    - class_path: pytorch_lightning.callbacks.LearningRateMonitor
+    - class_path: pytorch_lightning.callbacks.RichProgressBar
+    - class_path: pytorch_lightning.callbacks.ModelCheckpoint
+      init_args:
+        monitor: 'valid/top@1'
+        mode: 'max'
+
+  # 4-4. precision
+  precision: 16

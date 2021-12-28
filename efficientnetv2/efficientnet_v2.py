@@ -5,8 +5,8 @@ from collections import OrderedDict
 import torch
 from torch import nn
 
-from efficientnetv2.efficientnetv2_config import get_efficientnet_v2_structure
-from efficientnetv2.pretrained_weight_loader import load_from_zoo
+from efficientnetv2 import get_efficientnet_v2_structure
+from efficientnetv2 import load_from_zoo
 
 
 class ConvBNAct(nn.Sequential):
