@@ -92,7 +92,7 @@ If you want to finetuning on cifar, use this repository.
    - `cutmix(prob=1.0)`
 2. Changes from original paper (CIFAR)
    1. We just run 20 epochs to got above results. If you run more epochs, you can get more higher accuracy.
-   2. What we changed from original setup are: optimizer(`SGD` to `AdamW`), LR scheduler(`cosinelr` to `onecylelr`), augmentation(`cutout` to `cutmix`), image size (384 to 224), epoch (105 to 20). As you can see, even if we train smaller images with shorten epochs, our trained accuracies are not that lower than original setup.
+   2. What we changed from original setup are: optimizer(`SGD` to `AdamW`), LR scheduler(`cosinelr` to `onecylelr`), augmentation(`cutout` to `cutmix`), image size (384 to 224), epoch (105 to 20).
    3. Important hyper-parameter(most important to least important): LR->weigth_decay->ema-decay->cutmix_prob->epoch.
 3. you can get same results by running `tmuxp/cifar.yaml`
 
