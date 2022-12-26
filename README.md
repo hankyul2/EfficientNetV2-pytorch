@@ -3,7 +3,7 @@ Unofficial EfficientNetV2 pytorch implementation repository.
 
 It contains:
 
-- Simple Implementation of model ([here](efficientnetv2/efficientnetv2.py))
+- Simple Implementation of model ([here](efficientnetv2/efficientnet_v2.py))
 - Pretrained Model ([numpy weight](https://github.com/hankyul2/EfficientNetV2-pytorch/releases), we upload numpy files converted from official tensorflow checkout point)
 - Training code ([here](main.py))
 - Tutorial ([Colab EfficientNetV2-predict tutorial](https://colab.research.google.com/drive/1BYUeRVsVmBC4AuMyW-gkDboUVDX_jFrI?usp=sharing), [Colab EfficientNetV2-finetuning tutorial](https://colab.research.google.com/drive/1khaZWJDQJToR5GPNBJ01V6TXh8DXbKC_?usp=sharing))
